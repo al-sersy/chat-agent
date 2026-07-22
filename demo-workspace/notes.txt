@@ -1,0 +1,15 @@
+Project: ChatAgent Demo
+Status: In Progress
+
+Tasks:
+- [x] Phase 0 — repo skeleton
+- [x] Phase 1 — domain types
+- [x] Phase 2 — OpenRouter client
+- [x] Phase 3 — MCP client
+- [ ] Phase 4 — orchestrator
+- [ ] Phase 5 — API layer
+- [ ] Phase 6 — frontend
+
+Notes:
+The MCP filesystem server is scoped to this directory only.
+Ask the AI to list files, read this file, or explore sample-data.csv.
