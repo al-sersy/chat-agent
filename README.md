@@ -44,8 +44,8 @@ Invoke-RestMethod -Method Post -Uri 'http://127.0.0.1:8000/api/chat' -ContentTyp
 ## 5. Orchestration Flow
 The loop lives in `backend/app/application/chat_orchestrator.py`. It appends a `UserMessage`, calls the model with full history plus available tools, appends `ToolCall` items when present, executes each tool through `ToolClient`, appends `ToolResult`, and calls the model again. If no tool calls are returned, it appends `AssistantMessage` and returns the full item list. Safeguards include max iterations, timeout/error mapping, and result truncation.
 
-```
-flowchart
+```mermaid
+flowchart TD
     A[User sends message] --> B[Append UserMessage]
     B --> C[List tools from MCPToolClient]
     C --> D[ModelClient.complete with full history + tools]
