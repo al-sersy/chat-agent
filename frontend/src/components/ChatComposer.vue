@@ -1,22 +1,29 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed, nextTick } from 'vue'
 
 defineProps<{ loading: boolean }>()
 const emit = defineEmits<{ send: [message: string] }>()
 
 const text = ref('')
+const textareaRef = ref<HTMLTextAreaElement | null>(null)
 
-function submit() {
+const rows = computed(() => Math.min((text.value.match(/\n/g) ?? []).length + 1, 6))
+
+async function submit() {
   const message = text.value.trim()
   if (!message) return
   emit('send', message)
   text.value = ''
+  await nextTick()
+  textareaRef.value?.focus()
 }
 
 function onKeydown(e: KeyboardEvent) {
   if (e.key === 'Enter' && !e.shiftKey) {
     e.preventDefault()
     submit()
+  } else if (e.key === 'Escape') {
+    text.value = ''
   }
 }
 </script>
@@ -24,10 +31,11 @@ function onKeydown(e: KeyboardEvent) {
 <template>
   <div class="composer">
     <textarea
+      ref="textareaRef"
       v-model="text"
       :disabled="loading"
       placeholder="Type a message… (Enter to send, Shift+Enter for newline)"
-      rows="1"
+      :rows="rows"
       class="input"
       @keydown="onKeydown"
     />
@@ -47,7 +55,7 @@ function onKeydown(e: KeyboardEvent) {
   display: flex;
   gap: 8px;
   padding: 12px 16px;
-  border-top: 2px solid #ffd900;
+  border-top: 2px solid #e08000;
   background: #ffffff;
 }
 .input {
@@ -65,7 +73,7 @@ function onKeydown(e: KeyboardEvent) {
   color: #1a1a1a;
 }
 .input:focus {
-  border-color: #ffd900;
+  border-color: #e08000;
 }
 .input:disabled {
   background: #fafafa;
@@ -73,8 +81,8 @@ function onKeydown(e: KeyboardEvent) {
 }
 .send-btn {
   padding: 0 22px;
-  background: #ffd900;
-  color: #1a1a1a;
+  background: #c64500;
+  color: #ffffff;
   border: none;
   border-radius: 12px;
   font-size: 0.95rem;
@@ -87,7 +95,7 @@ function onKeydown(e: KeyboardEvent) {
   justify-content: center;
 }
 .send-btn:hover:not(:disabled) {
-  background: #f0ca00;
+  background: #a33600;
 }
 .send-btn:disabled {
   opacity: 0.5;
@@ -97,7 +105,7 @@ function onKeydown(e: KeyboardEvent) {
   display: inline-block;
   width: 16px;
   height: 16px;
-  border: 2px solid #1a1a1a;
+  border: 2px solid #ffffff;
   border-top-color: transparent;
   border-radius: 50%;
   animation: spin 0.8s linear infinite;

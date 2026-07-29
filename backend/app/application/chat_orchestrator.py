@@ -138,13 +138,104 @@ class ChatOrchestrator:
         )
 
 
-    def _append_error(self, detail: str) -> list[ConversationItem]:
-        self._conversation.append(
-            ErrorItem(
-                type="error",
+    async def chat_stream(self, user_message: str):
+        """Yield each conversation item as it is produced, for SSE streaming."""
+        user_msg = UserMessage(
+            type="user_message",
+            id=_new_id(),
+            timestamp=_now(),
+            content=user_message,
+        )
+        self._conversation.append(user_msg)
+        yield user_msg
+
+        for _iteration in range(_MAX_ITERATIONS):
+            try:
+                tools = await self._tools.list_tools()
+                response = await self._model.complete(
+                    ModelRequest(messages=list(self._conversation), tools=tools)
+                )
+            except httpx.TimeoutException:
+                item = self._make_error("The model took too long to respond. Please try again.")
+                self._conversation.append(item)
+                yield item
+                return
+            except httpx.HTTPStatusError as exc:
+                item = self._make_error(
+                    f"The model returned HTTP {exc.response.status_code}. Please try again."
+                )
+                self._conversation.append(item)
+                yield item
+                return
+            except Exception:
+                item = self._make_error("An unexpected error occurred while contacting the model.")
+                self._conversation.append(item)
+                yield item
+                return
+
+            if response.tool_calls:
+                for tc in response.tool_calls:
+                    tool_call = ToolCall(
+                        type="tool_call",
+                        id=_new_id(),
+                        timestamp=_now(),
+                        tool_call_id=tc.tool_call_id,
+                        tool_name=tc.tool_name,
+                        arguments=tc.arguments,
+                    )
+                    self._conversation.append(tool_call)
+                    yield tool_call
+
+                    try:
+                        exec_result = await self._tools.call_tool(tc.tool_name, tc.arguments)
+                    except Exception:
+                        item = self._make_error(f"Tool '{tc.tool_name}' could not be executed.")
+                        self._conversation.append(item)
+                        yield item
+                        return
+
+                    content = exec_result.content
+                    truncated = False
+                    if len(content) > _TOOL_RESULT_MAX_CHARS:
+                        content = (
+                            content[:_TOOL_RESULT_MAX_CHARS]
+                            + "\n[truncated — output exceeded 20,000 chars]"
+                        )
+                        truncated = True
+
+                    tool_result = ToolResult(
+                        type="tool_result",
+                        id=_new_id(),
+                        timestamp=_now(),
+                        tool_call_id=tc.tool_call_id,
+                        content=content,
+                        truncated=truncated,
+                    )
+                    self._conversation.append(tool_result)
+                    yield tool_result
+
+                continue
+
+            assistant_msg = AssistantMessage(
+                type="assistant_message",
                 id=_new_id(),
                 timestamp=_now(),
-                detail=detail,
+                content=response.content or "",
             )
+            self._conversation.append(assistant_msg)
+            yield assistant_msg
+            return
+
+        item = self._make_error(
+            f"The agent reached the maximum of {_MAX_ITERATIONS} iterations "
+            "without producing a final answer."
         )
+        self._conversation.append(item)
+        yield item
+
+    def _make_error(self, detail: str) -> ErrorItem:
+        return ErrorItem(type="error", id=_new_id(), timestamp=_now(), detail=detail)
+
+    def _append_error(self, detail: str) -> list[ConversationItem]:
+        self._conversation.append(self._make_error(detail))
         return list(self._conversation)

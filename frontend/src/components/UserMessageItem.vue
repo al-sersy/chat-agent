@@ -5,7 +5,10 @@ defineProps<{ item: UserMessage }>()
 
 <template>
   <div class="user-message">
-    <div class="bubble">{{ item.content }}</div>
+    <div class="msg-wrap">
+      <div class="bubble">{{ item.content }}</div>
+      <time class="timestamp">{{ new Date(item.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }}</time>
+    </div>
   </div>
 </template>
 
@@ -15,13 +18,24 @@ defineProps<{ item: UserMessage }>()
   justify-content: flex-end;
   margin: 8px 0;
 }
+.msg-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  max-width: 70%;
+}
 .bubble {
-  background: #ffd900;
-  color: #1a1a1a;
+  background: #c64500;
+  color: #ffffff;
   padding: 10px 16px;
   border-radius: 18px 18px 4px 18px;
-  max-width: 70%;
   line-height: 1.5;
   word-break: break-word;
+}
+.timestamp {
+  font-size: 0.7rem;
+  color: #bbb;
+  margin-top: 3px;
+  font-style: normal;
 }
 </style>
