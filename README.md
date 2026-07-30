@@ -2,7 +2,7 @@
   <img src="./frontend/public/logo.png" alt="ChatAgent Logo" width="180">
 </p>
 
-# ChatAgent
+<h1 align="center">ChatAgent</h1>
 
 > A streaming AI chat interface where you can watch the model think — tool calls appear live, results populate in real time, and every step of the agent loop is visible in the UI.
 
