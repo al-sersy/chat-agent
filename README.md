@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="./frontend/public/logo.png" alt="ChatAgent Logo" width="180">
+  <img src="./frontend/public/logo.png" alt="ChatAgent Logo" width="500">
 </p>
 
 # ChatAgent
